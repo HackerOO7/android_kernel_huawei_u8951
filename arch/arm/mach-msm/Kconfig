@@ -1736,12 +1736,20 @@ config MSM_CPU_FREQ_SET_MIN_MAX
 config MSM_CPU_FREQ_MAX
 	int "Max CPU Frequency"
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
-	default 384000
+	default 1008000
 
 config MSM_CPU_FREQ_MIN
 	int "Min CPU Frequency"
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
 	default 245760
+	
+config MSM8X25_OVERCLOCK
+    bool "Enable overclock for MSM8X25"
+    depends on MSM_CPU_FREQ_SET_MIN_MAX
+    default n
+    help
+      Enable overclock for MSM8X25. Make sure to set
+      CONFIG_MSM_CPU_FREQ_MAX to 1008000.
 
 endif # CPU_FREQ_MSM
 
@@ -2737,3 +2745,15 @@ config HUAWEI_KERNEL_DEBUG
 	default n
 	help
 	  Select Y if print HUAWEI log
+	  
+config HUAWEI_BT_BCM43XX
+   bool "Huawei BCM43XX Bluetooth"
+   default n
+   help
+     Select Y to use Broadcom's BTLA stack. Used by BCM4330 and BCM4329.
+ 
+ config HUAWEI_BT_WCN2243
+   bool "Qualcomm WCN2243 Bluetooth"
+   default n
+  help
+    Select Y to use Qualcomm's BlueZ stack. Used by WCN2243. Not used in Huawei devices.
