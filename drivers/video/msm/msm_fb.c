@@ -163,8 +163,12 @@ boolean lcd_have_resume = FALSE;
 /* Remove qcom backlight mechanism,user our own */
 boolean last_backlight_setting = FALSE;
 int last_backlight_level = 0;
+#ifdef CONFIG_FB_DYNAMIC_GAMMA
 int last_gamma_mode = GAMMA25;
+#endif
+#ifdef CONFIG_FB_AUTO_CABC
 struct msmfb_cabc_config last_cabc_mode;
+#endif
 boolean last_cabc_setting = FALSE;
 boolean last_gamma_setting = FALSE;
 /*delete some lines*/
@@ -1051,7 +1055,7 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 					last_backlight_setting = FALSE;
 					printk("%s:Waiting for LCD resume ,then set backlight level=%d\n",__func__,last_backlight_level);
 				}
-                
+#ifdef CONFIG_FB_DYNAMIC_GAMMA
                 /* delete the judgement is_panel_support_dynamic_gamma() */
 				if(TRUE == last_gamma_setting)
 				{
@@ -1059,7 +1063,8 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 					last_gamma_setting = FALSE;
 					printk("%s:Waiting for LCD resume ,then set gamma mode =%d\n",__func__,last_gamma_mode);
 				}
-
+#endif
+#ifdef CONFIG_FB_AUTO_CABC
                 /* delete the judgement is_panel_support_auto_cabc() */
 				if(TRUE == last_cabc_setting)
 				{
@@ -1067,7 +1072,7 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 					last_cabc_setting =FALSE;
 					printk("%s:Waiting for LCD resume ,then set cabc mode =%d\n",__func__,last_cabc_mode.mode);
 				}
-
+#endif
 #endif
 			}
 		}
@@ -1088,6 +1093,7 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			last_backlight_setting = FALSE;
 			printk("%s:Waiting for LCD resume ,then set backlight level=%d\n",__func__,last_backlight_level);
 		}
+#ifdef CONFIG_FB_DYNAMIC_GAMMA
         /* delete the judgement is_panel_support_dynamic_gamma() */
 		if(TRUE == last_gamma_setting)
 		{
@@ -1095,7 +1101,8 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			last_gamma_setting = FALSE;
 			printk("%s:Waiting for LCD resume ,then set gamma mode =%d\n",__func__,last_gamma_mode);
 		}
-
+#endif
+#ifdef CONFIG_FB_AUTO_CABC
         /* delete the judgement is_panel_support_auto_cabc() */
 		if(TRUE == last_cabc_setting)
 		{
@@ -1103,6 +1110,7 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			last_cabc_setting =FALSE;
 			printk("%s:Waiting for LCD resume ,then set cabc mode =%d\n",__func__,last_cabc_mode.mode);
 		}
+#endif
 #endif
         break;
 #endif
@@ -3170,6 +3178,19 @@ static int msmfb_overlay_play_wait(struct fb_info *info, unsigned long *argp)
 	return ret;
 }
 
+static int msmfb_overlay_commit(struct fb_info *info, unsigned long *argp)
+{
+	int ret, ndx;
+
+	ret = copy_from_user(&ndx, argp, sizeof(ndx));
+	if (ret) {
+		pr_err("%s: ioctl failed\n", __func__);
+		return ret;
+	}
+
+	return mdp4_overlay_commit(info, ndx);
+}
+
 static int msmfb_overlay_play(struct fb_info *info, unsigned long *argp)
 {
 	int	ret;
@@ -3625,7 +3646,24 @@ static int msmfb_handle_pp_ioctl(struct msm_fb_data_type *mfd,
 
 	return ret;
 }
-
+static int msmfb_handle_metadata_ioctl(struct msm_fb_data_type *mfd,
+				struct msmfb_metadata *metadata_ptr)
+{
+	int ret;
+	switch (metadata_ptr->op) {
+#ifdef CONFIG_FB_MSM_MDP40
+	case metadata_op_base_blend:
+		ret = mdp4_update_base_blend(mfd,
+						&metadata_ptr->data.blend_cfg);
+		break;
+#endif
+	default:
+		pr_warn("Unsupported request to MDP META IOCTL.\n");
+		ret = -EINVAL;
+		break;
+	}
+	return ret;
+}
 static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			unsigned long arg)
 {
@@ -3646,6 +3684,7 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 #endif
 	struct mdp_page_protection fb_page_protection;
 	struct msmfb_mdp_pp mdp_pp;
+	struct msmfb_metadata mdp_metadata;
 	int ret = 0;
 
 	switch (cmd) {
@@ -3658,6 +3697,11 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		break;
 	case MSMFB_OVERLAY_UNSET:
 		ret = msmfb_overlay_unset(info, argp);
+		break;
+	case MSMFB_OVERLAY_COMMIT:
+		down(&msm_fb_ioctl_ppp_sem);
+		ret = msmfb_overlay_commit(info, argp);
+		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_PLAY:
 		ret = msmfb_overlay_play(info, argp);
@@ -3987,6 +4031,14 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
         }
         break;
 #endif
+
+	case MSMFB_METADATA_SET:
+		ret = copy_from_user(&mdp_metadata, argp, sizeof(mdp_metadata));
+		if (ret)
+			return ret;
+		ret = msmfb_handle_metadata_ioctl(mfd, &mdp_metadata);
+		break;
+
 	default:
 		MSM_FB_INFO("MDP: unknown ioctl (cmd=%x) received!\n", cmd);
 		ret = -EINVAL;
