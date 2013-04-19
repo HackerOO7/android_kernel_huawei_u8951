@@ -260,10 +260,10 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200_pll4_1209[] = {
 	{ 0, 600000, ACPU_PLL_2, 2, 1, 75000, 3, 4, 160000 },
 	{ 1, 700800, ACPU_PLL_4, 6, 0, 87500, 3, 4, 160000, &pll4_cfg_tbl[0]},
 	{ 1, 1008000, ACPU_PLL_4, 6, 0, 126000, 3, 5, 200000, &pll4_cfg_tbl[1]},
-	#ifdef CONFIG_MSM8X25_OVERCLOCK
+#ifdef CONFIG_MSM8X25_OVERCLOCK
 	{ 1, 1209600, ACPU_PLL_4, 6, 0, 151200, 3, 6, 200000, &pll4_cfg_tbl[2]},
 	{ 1, 1401600, ACPU_PLL_4, 6, 0, 175000, 3, 7, 200000, &pll4_cfg_tbl[3]},
-	#endif
+#endif
 	{ 0 }
 };
 
@@ -278,10 +278,10 @@ static struct clkctl_acpu_speed pll0_960_pll1_196_pll2_1200_pll4_1209[] = {
 	{ 0, 600000, ACPU_PLL_2, 2, 1, 75000, 3, 4, 160000 },
 	{ 1, 700800, ACPU_PLL_4, 6, 0, 87500, 3, 4, 160000, &pll4_cfg_tbl[0]},
 	{ 1, 1008000, ACPU_PLL_4, 6, 0, 126000, 3, 5, 200000, &pll4_cfg_tbl[1]},
-	#ifdef CONFIG_MSM8X25_OVERCLOCK
+#ifdef CONFIG_MSM8X25_OVERCLOCK
 	{ 1, 1209600, ACPU_PLL_4, 6, 0, 151200, 3, 6, 200000, &pll4_cfg_tbl[2]},
 	{ 1, 1401600, ACPU_PLL_4, 6, 0, 175000, 3, 7, 200000, &pll4_cfg_tbl[3]},
-	#endif
+#endif
 	{ 0 }
 };
 
